@@ -9,3 +9,8 @@ apply:
 
 destroy:
 	cd terraform && terraform destroy 
+
+test:
+	aws lambda invoke --profile=lambda-deploy --region=ap-south-1 --function-name=example_lambda  lambda_response.txt
+	@cat lambda_response.txt
+	@rm lambda_response.txt
