@@ -6,7 +6,7 @@ This is a very basic example of deploying lambda and API gateway using terraform
 
 Create a very simple lambda function with a 'hello, world' json response.
 
-```
+```javascript
 'use strict'
 
 exports.handler = function(event, context, callback) {
@@ -44,4 +44,59 @@ $ make init
 $ make plan
 $ make apply
 $ make destroy
+```
+
+# Step 3: Create zip archive of the lambda source code
+
+We have a single file lambda function. So, we have just used the simple syntax of creating the zip archive. Terraform also supports archiving multiple files. Running plan will create a zip archive from the lambda source.
+
+The code looks like:
+
+`terraform/lambda.tf`
+```HCL
+variable "region" {}
+variable "profile" {}
+
+locals {
+  source_file = "${path.module}/../src/main.js"
+  output_path = "${path.module}/tmp/lambda_example.zip"
+}
+
+provider "aws" {
+  region  = var.region
+  profile = var.profile
+  version = "2.43.0"
+}
+
+provider "archive" {
+    version = "1.3.0"
+}
+
+data "archive_file" "lambda_example" {
+  type        = "zip"
+  source_file = local.source_file
+  output_path = local.output_path
+}
+```
+
+To test, run the plan which will create the zip file in the terraform/tmp directory.
+
+```
+$ make plan
+cd terraform && terraform plan -var-file='main.tfvars'
+Refreshing Terraform state in-memory prior to plan...
+The refreshed state will be used to calculate this plan, but will not be
+persisted to local or remote state storage.
+
+data.archive_file.lambda_example: Refreshing state...
+
+------------------------------------------------------------------------
+
+No changes. Infrastructure is up-to-date.
+
+This means that Terraform did not detect any differences between your
+configuration and real physical resources that exist. As a result, no
+actions need to be performed.
+$ ls ./terraform/tmp
+lambda_example.zip
 ```
