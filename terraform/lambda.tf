@@ -1,20 +1,7 @@
-variable "region" {}
-variable "profile" {}
-
 locals {
   source_file   = "${path.module}/../src/main.js"
   output_path   = "${path.module}/tmp/lambda_example.zip"
   function_name = "example_lambda" 
-}
-
-provider "aws" {
-  region  = var.region
-  profile = var.profile
-  version = "2.43.0"
-}
-
-provider "archive" {
-    version = "1.3.0"
 }
 
 data "archive_file" "lambda_example" {
