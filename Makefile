@@ -8,7 +8,7 @@ apply:
 	cd  terraform && terraform apply -var-file='main.tfvars'
 
 destroy:
-	cd terraform && terraform destroy 
+	cd terraform && terraform destroy -var-file='main.tfvars'
 
 test:
 	aws lambda invoke --profile=lambda-deploy --region=ap-south-1 --function-name=example_lambda  lambda_response.txt

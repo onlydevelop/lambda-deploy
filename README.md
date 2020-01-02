@@ -23,7 +23,7 @@ exports.handler = function(event, context, callback) {
 
 ## Step 2: Create a local profile and use in terraform
 
-Create an user with AWSLambdaFullAccess and IAM::CreateRole, with programmatic access and then configure your ~/.aws files as follows.
+Create an user with AWSLambdaFullAccess and IAM::CreateRole, IAM::ListInstanceProfilesForRole, IAM::DeleteRole with programmatic access and then configure your ~/.aws files as follows.
 
 ```
 $ cat ~/.aws/config
@@ -370,4 +370,140 @@ resource "aws_api_gateway_deployment" "api_example_deployment" {
 output "get_url" {
   value = "${aws_api_gateway_deployment.api_example_deployment.invoke_url}/${local.path_part}"
 }
+```
+
+Now, let's apply the change. As I was doing incremental changes, so, it was showing me 2 resources to be destroyed. However, on a fresh run there should not be any destroy.
+
+```
+$ make apply
+cd  terraform && terraform apply -var-file='main.tfvars'
+var.account_id
+  Enter a value: <REDACTED>
+
+data.archive_file.lambda_example: Refreshing state...
+aws_iam_role.lambda_example_role: Refreshing state... [id=lambda_example_role]
+aws_api_gateway_rest_api.api_example: Refreshing state... [id=m7vkjps7wj]
+aws_api_gateway_resource.api_example_resource: Refreshing state... [id=2w4ib0]
+aws_api_gateway_method.api_example_method: Refreshing state... [id=agm-m7vkjps7wj-2w4ib0-GET]
+aws_lambda_function.lambda_example: Refreshing state... [id=example_lambda]
+aws_lambda_permission.api_example_permission: Refreshing state... [id=AllowExecutionFromAPIGateway]
+aws_api_gateway_integration.api_example_integration: Refreshing state... [id=agi-m7vkjps7wj-2w4ib0-GET]
+aws_api_gateway_deployment.api_example_deployment: Refreshing state... [id=equrks]
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  + create
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # aws_api_gateway_deployment.api_example_deployment must be replaced
+-/+ resource "aws_api_gateway_deployment" "api_example_deployment" {
+      ~ created_date  = "2020-01-02T05:24:07Z" -> (known after apply)
+      ~ execution_arn = "arn:aws:execute-api:ap-south-1:<REDACTED>:m7vkjps7wj/test" -> (known after apply)
+      ~ id            = "equrks" -> (known after apply)
+      ~ invoke_url    = "https://m7vkjps7wj.execute-api.ap-south-1.amazonaws.com/test" -> (known after apply)
+      ~ rest_api_id   = "m7vkjps7wj" -> (known after apply) # forces replacement
+        stage_name    = "test"
+    }
+
+  # aws_api_gateway_integration.api_example_integration will be created
+  + resource "aws_api_gateway_integration" "api_example_integration" {
+      + cache_namespace         = (known after apply)
+      + connection_type         = "INTERNET"
+      + content_handling        = "CONVERT_TO_TEXT"
+      + http_method             = "GET"
+      + id                      = (known after apply)
+      + integration_http_method = "POST"
+      + passthrough_behavior    = "WHEN_NO_MATCH"
+      + resource_id             = (known after apply)
+      + rest_api_id             = (known after apply)
+      + timeout_milliseconds    = 29000
+      + type                    = "AWS_PROXY"
+      + uri                     = "arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-south-1:<REDACTED>:function:example_lambda/invocations"
+    }
+
+  # aws_api_gateway_method.api_example_method will be created
+  + resource "aws_api_gateway_method" "api_example_method" {
+      + api_key_required = false
+      + authorization    = "NONE"
+      + http_method      = "GET"
+      + id               = (known after apply)
+      + resource_id      = (known after apply)
+      + rest_api_id      = (known after apply)
+    }
+
+  # aws_api_gateway_resource.api_example_resource will be created
+  + resource "aws_api_gateway_resource" "api_example_resource" {
+      + id          = (known after apply)
+      + parent_id   = (known after apply)
+      + path        = (known after apply)
+      + path_part   = "example"
+      + rest_api_id = (known after apply)
+    }
+
+  # aws_api_gateway_rest_api.api_example will be created
+  + resource "aws_api_gateway_rest_api" "api_example" {
+      + api_key_source           = "HEADER"
+      + arn                      = (known after apply)
+      + created_date             = (known after apply)
+      + description              = "This is an example api"
+      + execution_arn            = (known after apply)
+      + id                       = (known after apply)
+      + minimum_compression_size = -1
+      + name                     = "api_example"
+      + root_resource_id         = (known after apply)
+
+      + endpoint_configuration {
+          + types = (known after apply)
+        }
+    }
+
+  # aws_lambda_permission.api_example_permission must be replaced
+-/+ resource "aws_lambda_permission" "api_example_permission" {
+        action        = "lambda:InvokeFunction"
+        function_name = "example_lambda"
+      ~ id            = "AllowExecutionFromAPIGateway" -> (known after apply)
+        principal     = "apigateway.amazonaws.com"
+      ~ source_arn    = "arn:aws:execute-api:ap-south-1:<REDACTED>:m7vkjps7wj/*/GET/example" -> (known after apply) # forces replacement
+        statement_id  = "AllowExecutionFromAPIGateway"
+    }
+
+Plan: 6 to add, 0 to change, 2 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+aws_lambda_permission.api_example_permission: Destroying... [id=AllowExecutionFromAPIGateway]
+aws_api_gateway_deployment.api_example_deployment: Destroying... [id=equrks]
+aws_api_gateway_rest_api.api_example: Creating...
+aws_lambda_permission.api_example_permission: Destruction complete after 3s
+aws_api_gateway_deployment.api_example_deployment: Destruction complete after 3s
+aws_api_gateway_rest_api.api_example: Creation complete after 3s [id=dp8bl6ywuh]
+aws_api_gateway_resource.api_example_resource: Creating...
+aws_api_gateway_resource.api_example_resource: Creation complete after 1s [id=cjr9hy]
+aws_api_gateway_method.api_example_method: Creating...
+aws_api_gateway_method.api_example_method: Creation complete after 0s [id=agm-dp8bl6ywuh-cjr9hy-GET]
+aws_lambda_permission.api_example_permission: Creating...
+aws_api_gateway_integration.api_example_integration: Creating...
+aws_lambda_permission.api_example_permission: Creation complete after 1s [id=AllowExecutionFromAPIGateway]
+aws_api_gateway_integration.api_example_integration: Creation complete after 1s [id=agi-dp8bl6ywuh-cjr9hy-GET]
+aws_api_gateway_deployment.api_example_deployment: Creating...
+aws_api_gateway_deployment.api_example_deployment: Creation complete after 1s [id=u7ha7k]
+
+Apply complete! Resources: 6 added, 0 changed, 2 destroyed.
+
+Outputs:
+
+get_url = https://mp8bl7ywuh.execute-api.ap-south-1.amazonaws.com/test/example
+```
+
+To test:
+
+```
+$ curl https://mp8bl7ywuh.execute-api.ap-south-1.amazonaws.com/test/example
+{"msg": "hello, world"}%
 ```
