@@ -37,3 +37,11 @@ aws_access_key_id = <put_your_access_key>
 aws_secret_access_key = <put_your_secret_access_key>
 ```
 
+Note: There is a Makefile in the root directory to have a easy use of the command.
+
+```
+$ make init
+$ make plan
+$ make apply
+$ make destroy
+```
