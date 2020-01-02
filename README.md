@@ -303,3 +303,21 @@ aws lambda invoke --profile=lambda-deploy --region=ap-south-1 --function-name=ex
 }
 {"statusCode":200,"headers":{"Content-Type":"application/json; charset=utf-8"},"body":"{\"msg\": \"hello, world\"}"}
 ```
+
+## Step 5: Add API Gateway integration
+
+We will now add API Gateway to access the lambda function. So, we will add the following code to the terraform/api.tf.
+
+```HCL
+locals {
+    name        = "api_example"
+    description = "This is an example api"
+}
+
+# This creates an empty API Gateway without any resources
+resource "aws_api_gateway_rest_api" "api_example" {
+    name        = local.name
+    description = local.description
+}
+
+```
